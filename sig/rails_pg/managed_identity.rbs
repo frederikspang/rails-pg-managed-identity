@@ -1,0 +1,80 @@
+module RailsPg
+  module ManagedIdentity
+    VERSION: String
+    CONFIG_KEY: Symbol
+    DEFAULT_SCOPE: String
+
+    class Error < ActiveRecord::ConnectionNotEstablished
+    end
+
+    class CredentialUnavailableError < Error
+    end
+
+    class AuthenticationError < Error
+    end
+
+    interface _Credential
+      def get_token: (String scope) -> AccessToken
+    end
+
+    attr_accessor self.refresh_offset: Integer
+    attr_writer self.logger: Logger?
+
+    def self.logger: () -> Logger?
+    def self.token_provider_for: (Hash[Symbol, untyped] config) -> TokenProvider?
+    def self.reset!: () -> void
+
+    class AccessToken
+      attr_reader token: String
+      attr_reader expires_on: Integer
+
+      def initialize: (token: String, expires_on: Integer) -> void
+      def expires_in: () -> Integer
+    end
+
+    class TokenProvider
+      REFRESH_RETRY_DELAY: Integer
+      MINIMUM_VALIDITY: Integer
+
+      attr_reader credential: _Credential
+      attr_reader scope: String
+
+      def initialize: (_Credential credential, scope: String) -> void
+      def token: () -> String
+    end
+
+    class DefaultAzureCredential
+      include _Credential
+
+      def initialize: (?client_id: String?) -> void
+    end
+
+    class ManagedIdentityCredential
+      include _Credential
+
+      def initialize: (?client_id: String?) -> void
+    end
+
+    class WorkloadIdentityCredential
+      include _Credential
+
+      def initialize: (?client_id: String?) -> void
+    end
+
+    class EnvironmentCredential
+      include _Credential
+    end
+
+    class AzureCliCredential
+      include _Credential
+
+      def initialize: (?process_timeout: Numeric) -> void
+    end
+
+    class PostgreSQLDatabaseTasks < ActiveRecord::Tasks::PostgreSQLDatabaseTasks
+    end
+
+    class Railtie < ::Rails::Railtie
+    end
+  end
+end

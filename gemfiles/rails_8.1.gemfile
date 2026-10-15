@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+# CI runs the tests against each supported Rails version: BUNDLE_GEMFILE=gemfiles/rails_8.1.gemfile
+eval_gemfile "../Gemfile"
+
+gem "activerecord", "~> 8.1.0"

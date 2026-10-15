@@ -1,0 +1,29 @@
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - "test/**/*"
+
+Metrics/AbcSize:
+  Max: 25
+  Exclude:
+    - "test/**/*"
+
+Metrics/ClassLength:
+  Exclude:
+    - "test/**/*"
+
+# Bundler requires the gem by its name, so this file has to be named after it.
+Naming/FileName:
+  Exclude:
+    - "lib/rails-pg-managed-identity.rb"

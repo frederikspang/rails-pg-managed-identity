@@ -1,0 +1,55 @@
+name: Ruby
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }}, Rails ${{ matrix.rails }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ['3.3', '3.4', '4.0']
+        rails: ['7.2', '8.0', '8.1']
+    env:
+      BUNDLE_GEMFILE: gemfiles/rails_${{ matrix.rails }}.gemfile
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      # The integration tests start their own throwaway PostgreSQL cluster. The runner image has
+      # PostgreSQL installed, just not on PATH.
+      - name: Locate PostgreSQL server binaries
+        run: echo "PG_BINDIR=$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -n 1)" >> "$GITHUB_ENV"
+      - name: Run the tests
+        run: bundle exec rake test
+
+  lint:
+    runs-on: ubuntu-latest
+    name: RuboCop
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+      - name: Run RuboCop
+        run: bundle exec rake rubocop

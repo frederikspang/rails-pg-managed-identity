@@ -1,0 +1,11 @@
+# No password: it's a Microsoft Entra access token from the managed identity endpoint
+# (IDENTITY_ENDPOINT/IDENTITY_HEADER, here the mock token service), fetched when a connection opens.
+test:
+  adapter: postgresql
+  host: 127.0.0.1
+  port: <%= ENV.fetch("DUMMY_DATABASE_PORT") %>
+  database: dummy_test
+  username: dummy-app-identity
+  sslmode: disable # Azure requires `require`; the local test cluster has no TLS
+  pool: 5
+  azure_managed_identity: true
