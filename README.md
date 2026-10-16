@@ -3,19 +3,8 @@
 > [!WARNING]
 > Not yet published. Not yet tested in real life world.
 
-
-Passwordless connections from Rails (7.2+, Ruby 3.3+) to **Azure Database for PostgreSQL flexible server** using
-Microsoft Entra access tokens: the app's managed identity, AKS workload identity, a service principal, or
-your `az login` during development.
-
-The token *is* the PostgreSQL password, but tokens expire (5–60 minutes for user tokens, longer for
-managed identities), so a value fixed in `database.yml` at boot doesn't work. With this gem the password
-is resolved **each time a connection is opened**: a cached token is reused until 5 minutes before it
-expires, then a new one is requested, the way `DefaultAzureCredential` does it in Microsoft's SDKs.
-It's the Ruby counterpart of Microsoft's
-[`azure-postgresql-auth`](https://learn.microsoft.com/python/api/overview/azure/postgresql-auth-readme)
-for Python, for the `pg` gem and Active Record. There is no maintained Azure Identity SDK for Ruby, so the
-token endpoints are called directly (stdlib `Net::HTTP`, no other dependencies).
+Passwordless connections from Rails (7.2+, Ruby 3.3+) to **Azure Database for PostgreSQL flexible server** using Microsoft Entra access tokens: 
+the app's managed identity, AKS workload identity, a service principal, or your `az login` during development.
 
 ## Installation
 
@@ -80,27 +69,16 @@ Azure Arc and Service Fabric managed identities aren't supported.
 
 4. Grant that role what the app needs, and use its name as `username` in `database.yml`.
 
-For local development against Azure, `az login` and use your own user principal name (or an Entra group
-you're a member of) as `username`.
+For local development against Azure, `az login` and use your own user principal name (or an Entra group you're a member of) as `username`.
 
 ### Token lifecycle
 
-- Tokens are fetched lazily, when a connection is opened, and reused until 5 minutes before expiry
-  (`RailsPg::ManagedIdentity.refresh_offset = 300`).
-- While the cached token is still valid, a new one is requested at most every 30 seconds. If that
-  request fails, the cached token is used and the failure is logged. A token is never handed out with
-  less than 10 seconds left.
-- PostgreSQL only checks the password when a session starts, so open connections outlive their token.
-  New connections, reconnects included, always get a current one. (Reconnects open a fresh connection
-  instead of `PG::Connection#reset`, which would reuse the original, possibly expired, password.)
-- Failures raise `RailsPg::ManagedIdentity::AuthenticationError` or `CredentialUnavailableError`,
-  both `ActiveRecord::ConnectionNotEstablished`s, so Active Record's connection retries apply.
-- Tokens never appear in logs, `inspect` or `pp` output. Logging goes to `ActiveRecord::Base.logger`,
-  or set `RailsPg::ManagedIdentity.logger`.
+- Tokens are fetched lazily, when a connection is opened, and reused until 5 minutes before expiry (`RailsPg::ManagedIdentity.refresh_offset = 300`).
+- While the cached token is still valid, a new one is requested at most every 30 seconds. 
+  If that request fails, the cached token is used and the failure is logged. A token is never handed out with less than 10 seconds left.
 
-`bin/rails dbconsole`, and `db:schema:dump`/`db:schema:load` with `structure.sql` (`pg_dump`/`psql`),
-get the token through `PGPASSWORD`. The database tasks are only hooked when rake tasks are loaded, so
-app and job processes don't load that code.
+`bin/rails dbconsole`, and `db:schema:dump`/`db:schema:load` with `structure.sql` (`pg_dump`/`psql`), get the token through `PGPASSWORD`. 
+The database tasks are only hooked when rake tasks are loaded, so app and job processes don't load that code.
 
 ## Development
 
@@ -113,16 +91,8 @@ BUNDLE_GEMFILE=gemfiles/rails_7.2.gemfile bundle install
 BUNDLE_GEMFILE=gemfiles/rails_7.2.gemfile bundle exec rake test
 ```
 
-The tests need PostgreSQL's server binaries (`initdb`, `pg_ctl`); they're found through `pg_config`, or
-set `PG_BINDIR`. No running server or Azure account is needed:
-
-- `test/support/mock_token_service.rb` imitates the managed identity endpoints (App Service and IMDS) and
-  Microsoft Entra ID's token endpoint, validating requests the way they do and issuing long random tokens.
-- `test/support/postgres_cluster.rb` starts a throwaway cluster in which every login needs a password.
-  Each token the mock issues becomes the app role's password, valid until the token expires, so a
-  connection only succeeds with the current token.
-- `test/dummy` is a minimal Rails app whose `database.yml` has `azure_managed_identity: true` and no
-  password. The integration tests boot it with `IDENTITY_ENDPOINT` pointing at the mock, as on App Service.
+The tests need PostgreSQL's server binaries (`initdb`, `pg_ctl`); they're found through `pg_config`, or set `PG_BINDIR`.
+No running server or Azure account is needed:
 
 ## Contributing
 
