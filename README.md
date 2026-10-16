@@ -1,7 +1,6 @@
 # rails-pg-managed-identity
 
-> [!WARNING]
-> Not yet published. Not yet tested in real life world.
+[![Gem Version](https://badge.fury.io/rb/rails-pg-managed-identity.svg?icon=si%3Arubygems)](https://badge.fury.io/rb/rails-pg-managed-identity)
 
 Passwordless connections from Rails (7.2+, Ruby 3.3+) to **Azure Database for PostgreSQL flexible server** using Microsoft Entra access tokens: 
 the app's managed identity, AKS workload identity, a service principal, or your `az login` during development.
